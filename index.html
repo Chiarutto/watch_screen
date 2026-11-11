@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Veilleuse">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta name="format-detection" content="telephone=no">
+  <title>Veilleuse</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main id="scene" aria-live="off">
+    <div id="clock" aria-label="Heure"><span id="time">0:00</span></div>
+  </main>
+
+  <div id="notice" hidden>Écran : veille non bloquée — touchez l’écran</div>
+
+  <!-- Repli « NoSleep » : vidéo noire muette en boucle -->
+  <video id="nosleep" src="media/veille.mp4" muted playsinline loop preload="auto"
+         webkit-playsinline disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
+
+  <section id="settings" hidden aria-label="Réglages">
+    <div class="panel">
+      <h1>Réglages</h1>
+
+      <div class="group">
+        <h2>Couleur des chiffres</h2>
+        <div id="colors" class="colors" role="radiogroup" aria-label="Couleur des chiffres"></div>
+      </div>
+
+      <div class="group">
+        <label class="row" for="bright">
+          <span>Luminosité</span>
+          <output id="brightVal">25 %</output>
+        </label>
+        <input id="bright" type="range" min="3" max="100" step="1" value="25">
+      </div>
+
+      <div class="group">
+        <label class="row" for="onTime">
+          <span>Allumage</span>
+          <input id="onTime" type="time" value="04:30" required>
+        </label>
+        <label class="row" for="offEnabled">
+          <span>Extinction</span>
+          <span class="switch">
+            <input id="offEnabled" type="checkbox" role="switch" checked>
+            <span class="slider" aria-hidden="true"></span>
+          </span>
+        </label>
+        <label class="row" for="offTime" id="offRow">
+          <span>Heure d’extinction</span>
+          <input id="offTime" type="time" value="07:00" required>
+        </label>
+        <p id="scheduleHint" class="hint"></p>
+      </div>
+
+      <p class="hint">Touchez l’écran noir pour voir l’heure 10 secondes. Appui long (2 s) pour ouvrir ces réglages.</p>
+
+      <button id="close" type="button">Fermer</button>
+    </div>
+  </section>
+
+  <script src="app.js"></script>
+</body>
+</html>
