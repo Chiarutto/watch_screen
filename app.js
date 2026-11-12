@@ -13,8 +13,18 @@
     { id: 'blanc',  name: 'Blanc chaud', hex: '#ffe4c4' },
   ];
 
+  // Polices installées sur iPhone (aucun téléchargement : tout reste hors ligne)
+  const FONTS = [
+    { id: 'arrondi', name: 'Arrondie', family: 'ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif', weight: 400 },
+    { id: 'moderne', name: 'Moderne',  family: '-apple-system, system-ui, "Helvetica Neue", Arial, sans-serif', weight: 400 },
+    { id: 'futura',  name: 'Futura',   family: 'Futura, "Futura PT", "Century Gothic", "Trebuchet MS", sans-serif', weight: 500 },
+    { id: 'serif',   name: 'Classique', family: 'ui-serif, "New York", Georgia, "Times New Roman", serif', weight: 400 },
+    { id: 'mono',    name: 'Machine',  family: 'ui-monospace, "SF Mono", Menlo, Courier, monospace', weight: 400 },
+  ];
+
   const DEFAULTS = {
     color: 'rouge',
+    font: 'arrondi',
     bright: 25,       // %
     on: '04:30',
     off: '07:00',
@@ -29,6 +39,7 @@
     try { s = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { s = {}; }
     const out = Object.assign({}, DEFAULTS, s);
     if (!COLORS.some(c => c.id === out.color)) out.color = DEFAULTS.color;
+    if (!FONTS.some(f => f.id === out.font)) out.font = DEFAULTS.font;
     out.bright = Math.min(100, Math.max(3, Number(out.bright) || DEFAULTS.bright));
     if (!/^\d{2}:\d{2}$/.test(out.on)) out.on = DEFAULTS.on;
     if (!/^\d{2}:\d{2}$/.test(out.off)) out.off = DEFAULTS.off;
@@ -53,6 +64,7 @@
   const video = $('nosleep');
   const panel = $('settings');
   const colorsEl = $('colors');
+  const fontsEl = $('fonts');
   const brightEl = $('bright');
   const brightVal = $('brightVal');
   const onEl = $('onTime');
@@ -94,6 +106,9 @@
   function applyStyle() {
     const c = COLORS.find(x => x.id === settings.color) || COLORS[0];
     root.style.setProperty('--digit', c.hex);
+    const f = FONTS.find(x => x.id === settings.font) || FONTS[0];
+    root.style.setProperty('--clock-font', f.family);
+    root.style.setProperty('--clock-weight', String(f.weight));
     root.style.setProperty('--bright', String(settings.bright / 100));
   }
 
@@ -308,6 +323,29 @@
     });
   }
 
+  function buildFonts() {
+    fontsEl.innerHTML = '';
+    FONTS.forEach(f => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'swatch';
+      b.setAttribute('role', 'radio');
+      b.dataset.id = f.id;
+      const prev = document.createElement('b');
+      prev.textContent = '4:30';
+      prev.style.fontFamily = f.family;
+      prev.style.fontWeight = String(f.weight);
+      const label = document.createElement('span');
+      label.textContent = f.name;
+      b.append(prev, label);
+      b.addEventListener('click', () => {
+        settings.font = f.id;
+        saveSettings(); applyStyle(); syncForm(); fit();
+      });
+      fontsEl.appendChild(b);
+    });
+  }
+
   function scheduleText() {
     const fmt = (s) => String(Number(s.split(':')[0])) + ':' + s.split(':')[1];
     if (!settings.offEnabled) return `Heure visible de ${fmt(settings.on)} à minuit.`;
@@ -321,6 +359,13 @@
       const sel = b.dataset.id === settings.color;
       b.setAttribute('aria-checked', String(sel));
       b.querySelector('b').style.opacity = String(Math.max(0.35, settings.bright / 100));
+    });
+    const c = COLORS.find(x => x.id === settings.color) || COLORS[0];
+    [...fontsEl.children].forEach(b => {
+      b.setAttribute('aria-checked', String(b.dataset.id === settings.font));
+      const prev = b.querySelector('b');
+      prev.style.color = c.hex;
+      prev.style.opacity = String(Math.max(0.35, settings.bright / 100));
     });
     brightEl.value = settings.bright;
     brightVal.textContent = settings.bright + ' %';
@@ -546,6 +591,7 @@
   applyStyle();
   loadAlarmSound();
   buildColors();
+  buildFonts();
   syncForm();
   render();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit); else fit();

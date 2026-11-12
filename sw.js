@@ -1,6 +1,6 @@
 // Service worker : met tout en cache pour un fonctionnement 100 % hors ligne.
 // Changez VERSION à chaque mise à jour des fichiers pour forcer le rafraîchissement.
-const VERSION = 'veilleuse-v2';
+const VERSION = 'veilleuse-v3';
 const FILES = [
   './',
   'index.html',

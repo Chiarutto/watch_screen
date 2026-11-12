@@ -1,9 +1,9 @@
 :root {
   --digit: #ff2b1c;
   --bright: 0.25;
-  --ui-text: #7a7a7a;
-  --ui-dim: #4a4a4a;
-  --ui-line: #1c1c1c;
+  --ui-text: #8e8e8e;
+  --ui-dim: #5e5e5e;
+  --ui-line: #252525;
   --ui-accent: #8a3a2a;
   --fade: 3s;
 }
@@ -50,8 +50,8 @@ html, body {
 #time {
   display: block;
   color: var(--digit);
-  font-family: ui-rounded, "SF Pro Rounded", -apple-system, system-ui, "Helvetica Neue", Arial, sans-serif;
-  font-weight: 300;
+  font-family: var(--clock-font, ui-rounded, -apple-system, system-ui, sans-serif);
+  font-weight: var(--clock-weight, 400);
   font-stretch: expanded;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
@@ -100,7 +100,7 @@ html, body {
 #settings[hidden] { display: none; }
 
 .panel {
-  opacity: 0.85;
+  opacity: 0.95;
   max-width: 520px;
   margin: 0 auto;
 }
@@ -133,6 +133,10 @@ h2 {
 @media (orientation: landscape) {
   .colors { grid-template-columns: repeat(8, 1fr); }
 }
+.fonts { grid-template-columns: repeat(5, 1fr); margin-top: 8px; }
+@media (orientation: landscape) {
+  .fonts { grid-template-columns: repeat(5, 1fr); }
+}
 .swatch {
   appearance: none;
   -webkit-appearance: none;
@@ -151,7 +155,7 @@ h2 {
 }
 .swatch b {
   font-family: ui-rounded, -apple-system, system-ui, sans-serif;
-  font-weight: 300;
+  font-weight: 400;
   font-size: 20px;
   font-variant-numeric: tabular-nums;
   line-height: 1;

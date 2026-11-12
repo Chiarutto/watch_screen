@@ -7,7 +7,8 @@ Funziona completamente offline. L'interfaccia è in francese.
 
 - **Tocco singolo** sullo schermo nero (fuori dalla fascia oraria): l'ora compare per 10 secondi.
 - **Pressione prolungata (2 s)** in qualsiasi momento: apre i *Réglages* (impostazioni).
-- **Réglages**: colore delle cifre (8 colori), luminosità, ora di accensione (*Allumage*,
+- **Réglages**: colore delle cifre (8 colori), carattere (*Police*: Arrondie, Moderne, Futura,
+  Classique, Machine — tutti già presenti sull'iPhone, funzionano offline), luminosità, ora di accensione (*Allumage*,
   default 4:30), ora di spegnimento (*Extinction*, default 7:00) con interruttore per
   disattivarla. Se lo spegnimento è disattivato, l'ora resta visibile dall'accensione fino a
   mezzanotte. Le fasce che passano la mezzanotte (es. 22:00–7:00) sono gestite.
