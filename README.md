@@ -11,6 +11,11 @@ Funziona completamente offline. L'interfaccia è in francese.
   default 4:30), ora di spegnimento (*Extinction*, default 7:00) con interruttore per
   disattivarla. Se lo spegnimento è disattivato, l'ora resta visibile dall'accensione fino a
   mezzanotte. Le fasce che passano la mezzanotte (es. 22:00–7:00) sono gestite.
+- **Sveglia (*Réveil*)**: nelle impostazioni attiva *Réveil*, scegli l'ora e tocca
+  *Choisir un son…* per prendere un file audio (mp3, m4a…) dall'app **File**. Il file viene
+  copiato dentro l'app e funziona anche offline / in modalità aereo. All'ora scelta parte
+  **solo l'audio**, in loop (massimo 30 minuti); lo schermo resta com'è. **Tocca lo schermo per
+  fermarlo.** *Écouter* serve a provarlo.
 - Le impostazioni restano salvate anche dopo la chiusura dell'app.
 - Ogni minuto l'orario si sposta di pochi pixel (protezione dello schermo OLED).
 - Se in basso compare la scritta *« Écran : veille non bloquée — touchez l'écran »*, il blocco
@@ -75,6 +80,23 @@ Nota: con un account GitHub gratuito, Pages funziona solo se il repository è **
   OLED consuma pochissimo.
 - Il colore rosso o ambra con luminosità bassa è il meno disturbante per il sonno.
 
+## Sveglia: cose importanti
+
+- **Ogni sera, dopo aver aperto l'app, tocca lo schermo una volta.** iOS non permette a una
+  pagina web di far partire un suono senza un tocco: il tocco "arma" la sveglia. Finché non
+  l'hai fatto, in basso compare la scritta *« Réveil : touchez l'écran une fois pour l'armer »*.
+  Se l'app va in secondo piano (passi a un'altra app, blocchi il telefono), va riarmata.
+- **Il volume è quello dei tasti laterali dell'iPhone** (volume dei contenuti multimediali, non
+  della suoneria). Controllalo la sera prima di dormire.
+- Se iOS blocca comunque il suono, l'orario si accende al massimo della luminosità con la scritta
+  *« Réveil — touchez l'écran pour arrêter »*: è un ripiego, non sveglia nessuno.
+- **Non è affidabile quanto la sveglia dell'app Orologio di iOS.** Se l'app viene chiusa, il
+  telefono si blocca o la batteria si scarica, non suona. Per svegliarti davvero, tieni anche
+  una sveglia di riserva nell'app Orologio qualche minuto dopo.
+- Prova la sveglia una prima volta impostandola 2–3 minuti avanti.
+- YouTube non è supportato: serve internet, iOS non lascia partire l'audio da solo e le regole di
+  YouTube vietano di usarne solo l'audio.
+
 ## Limiti noti
 
 - Su iOS una web app non può riaccendere lo schermo da sola: se l'iPhone si blocca (tasto laterale,
@@ -94,9 +116,10 @@ apri l'app due volte con internet attivo: la seconda volta parte la nuova versio
 |---|---|
 | `index.html` | pagina principale |
 | `style.css` | aspetto |
-| `app.js` | orologio, fascia oraria, gesti, impostazioni, schermo acceso |
+| `app.js` | orologio, fascia oraria, sveglia, gesti, impostazioni, schermo acceso |
 | `sw.js` | service worker (cache offline) |
 | `manifest.json` | dati per l'installazione come app |
 | `icons/` | icone della schermata Home |
+| `media/silence.m4a` | silenzio usato per "armare" l'audio della sveglia |
 | `media/veille.mp4` | video nero muto di riserva per tenere lo schermo acceso |
 | `.nojekyll` | dice a GitHub Pages di servire i file così come sono |

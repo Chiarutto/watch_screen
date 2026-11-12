@@ -19,6 +19,8 @@
     on: '04:30',
     off: '07:00',
     offEnabled: true,
+    alarmEnabled: false,
+    alarmTime: '06:30',
   };
   const KEY = 'veilleuse.settings.v1';
 
@@ -31,6 +33,8 @@
     if (!/^\d{2}:\d{2}$/.test(out.on)) out.on = DEFAULTS.on;
     if (!/^\d{2}:\d{2}$/.test(out.off)) out.off = DEFAULTS.off;
     out.offEnabled = out.offEnabled !== false;
+    out.alarmEnabled = out.alarmEnabled === true;
+    if (!/^\d{2}:\d{2}$/.test(out.alarmTime)) out.alarmTime = DEFAULTS.alarmTime;
     return out;
   }
   function saveSettings() {
@@ -57,6 +61,14 @@
   const offRow = $('offRow');
   const hintEl = $('scheduleHint');
   const closeBtn = $('close');
+  const alarmAudio = $('alarm');
+  const alarmEnabledEl = $('alarmEnabled');
+  const alarmTimeEl = $('alarmTime');
+  const alarmTimeRow = $('alarmTimeRow');
+  const alarmNameEl = $('alarmName');
+  const alarmFileEl = $('alarmFile');
+  const alarmTestEl = $('alarmTest');
+  const alarmHintEl = $('alarmHint');
 
   // ---------- Plage horaire ----------
   const toMin = (hhmm) => {
@@ -97,8 +109,10 @@
       timeEl.textContent = key;
       shift();
     }
-    const visible = inWindow(d) || Date.now() < peekUntil;
+    const visible = inWindow(d) || Date.now() < peekUntil || ringFailed;
     clock.classList.toggle('on', visible);
+    clock.classList.toggle('wake', ringFailed);
+    checkAlarm(d);
   }
 
   // Ajuste la taille de police pour remplir l'écran (même largeur pour 4 ou 5 caractères)
@@ -192,7 +206,13 @@
   }
 
   function updateNotice() {
-    notice.hidden = awake() || !panel.hidden;
+    let msg = '';
+    if (!awake()) msg = 'Écran : veille non bloquée — touchez l’écran';
+    else if (ringFailed) msg = 'Réveil — touchez l’écran pour arrêter';
+    else if (settings.alarmEnabled && !alarmUnlocked) msg = 'Réveil : touchez l’écran une fois pour l’armer';
+    notice.textContent = msg;
+    notice.classList.toggle('alarm', !!msg && awake());
+    notice.hidden = !msg || !panel.hidden;
   }
 
   video.addEventListener('playing', updateNotice);
@@ -200,6 +220,8 @@
 
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
+      // Après un passage en arrière-plan, iOS peut couper la session audio : on réarme.
+      if (!ringing) alarmUnlocked = false;
       lastMinuteKey = '';
       render();
       keepAwake();
@@ -235,6 +257,8 @@
     const wasPending = !!pressTimer;
     cancelPress();
     keepAwake();
+    if (ringing) { stopRing(); return; }
+    unlockAudio();
     if (longFired) return;
     if (wasPending && Date.now() - pressStart < 700) {
       if (!inWindow(new Date())) peek();
@@ -328,6 +352,7 @@
   function openSettings() {
     cancelPress();
     syncForm();
+    syncAlarmForm();
     panel.hidden = false;
     panel.scrollTop = 0;
     updateNotice();
@@ -335,6 +360,8 @@
   function closeSettings() {
     if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
     panel.hidden = true;
+    stopTest();
+    unlockAudio();
     lastMinuteKey = '';
     render();
     keepAwake();
@@ -342,8 +369,182 @@
   closeBtn.addEventListener('click', closeSettings);
   panel.addEventListener('click', () => keepAwake());
 
+  // ---------- Réveil ----------
+  // iOS interdit à une page de lancer un son sans geste de l'utilisateur. On « déverrouille »
+  // l'élément <audio> lors d'un toucher (lecture d'un silence) ; il peut ensuite jouer seul.
+  const SILENCE = 'media/silence.m4a';
+  const RING_MAX_MS = 30 * 60 * 1000;
+  let alarmUrl = null;
+  let alarmFileName = '';
+  let alarmUnlocked = false;
+  let ringing = false;
+  let ringFailed = false;
+  let testing = false;
+  let ringTimer = null;
+  let lastFiredKey = '';
+
+  if (navigator.audioSession) {
+    try { navigator.audioSession.type = 'playback'; } catch (e) { /* ignoré */ }
+  }
+
+  function idb() {
+    return new Promise((resolve, reject) => {
+      const r = indexedDB.open('veilleuse', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('files');
+      r.onsuccess = () => resolve(r.result);
+      r.onerror = () => reject(r.error);
+    });
+  }
+  async function idbGet(key) {
+    const db = await idb();
+    return new Promise((resolve, reject) => {
+      const q = db.transaction('files').objectStore('files').get(key);
+      q.onsuccess = () => resolve(q.result);
+      q.onerror = () => reject(q.error);
+    });
+  }
+  async function idbPut(key, value) {
+    const db = await idb();
+    return new Promise((resolve, reject) => {
+      const t = db.transaction('files', 'readwrite');
+      t.objectStore('files').put(value, key);
+      t.oncomplete = () => resolve();
+      t.onerror = () => reject(t.error);
+    });
+  }
+
+  function guessType(name) {
+    const ext = (name.split('.').pop() || '').toLowerCase();
+    return { mp3: 'audio/mpeg', m4a: 'audio/mp4', aac: 'audio/aac', wav: 'audio/wav', caf: 'audio/x-caf' }[ext] || 'audio/mpeg';
+  }
+
+  function setAlarmSound(buf, type, name) {
+    if (alarmUrl) URL.revokeObjectURL(alarmUrl);
+    alarmUrl = URL.createObjectURL(new Blob([buf], { type }));
+    alarmFileName = name;
+  }
+
+  async function loadAlarmSound() {
+    try {
+      const rec = await idbGet('alarm');
+      if (rec && rec.data) setAlarmSound(rec.data, rec.type, rec.name);
+    } catch (e) { /* pas de son enregistré */ }
+    syncAlarmForm();
+  }
+
+  function unlockAudio() {
+    if (alarmUnlocked || ringing || testing || !settings.alarmEnabled) return;
+    alarmAudio.loop = false;
+    alarmAudio.src = SILENCE;
+    const p = alarmAudio.play();
+    if (p && p.then) {
+      p.then(() => { alarmUnlocked = true; updateNotice(); }).catch(() => {});
+    }
+  }
+
+  function checkAlarm(d) {
+    if (!settings.alarmEnabled || ringing) return;
+    const hm = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    const key = d.toDateString() + ' ' + hm;
+    if (hm === settings.alarmTime && key !== lastFiredKey) {
+      lastFiredKey = key;
+      ring();
+    }
+  }
+
+  function ring() {
+    stopTest();
+    ringing = true;
+    clearTimeout(ringTimer);
+    ringTimer = setTimeout(stopRing, RING_MAX_MS);
+    const fail = () => { ringFailed = true; updateNotice(); render(); };
+    if (!alarmUrl) { fail(); return; }
+    alarmAudio.src = alarmUrl;
+    alarmAudio.loop = true;
+    const p = alarmAudio.play();
+    if (p && p.catch) p.catch(fail);
+    syncAlarmForm();
+  }
+
+  function stopRing() {
+    ringing = false;
+    ringFailed = false;
+    clearTimeout(ringTimer);
+    alarmAudio.pause();
+    alarmAudio.loop = false;
+    updateNotice();
+    syncAlarmForm();
+    render();
+  }
+
+  function stopTest() {
+    if (!testing) return;
+    testing = false;
+    alarmAudio.pause();
+    syncAlarmForm();
+  }
+
+  alarmAudio.addEventListener('ended', () => { if (testing) stopTest(); });
+
+  function syncAlarmForm() {
+    alarmEnabledEl.checked = settings.alarmEnabled;
+    alarmTimeEl.value = settings.alarmTime;
+    alarmTimeEl.disabled = !settings.alarmEnabled;
+    alarmTimeRow.classList.toggle('disabled', !settings.alarmEnabled);
+    alarmNameEl.textContent = alarmFileName || 'Aucun';
+    alarmTestEl.textContent = (testing || ringing) ? 'Arrêter' : 'Écouter';
+    alarmTestEl.disabled = !alarmUrl && !ringing;
+    let hint;
+    if (!settings.alarmEnabled) hint = 'Réveil désactivé.';
+    else if (!alarmUrl) hint = 'Choisissez un fichier audio (app Fichiers) : il est copié dans l’app et fonctionne hors ligne.';
+    else hint = 'Le son démarre à ' + Number(settings.alarmTime.split(':')[0]) + ':' + settings.alarmTime.split(':')[1] +
+      ' et tourne en boucle (30 min max). Touchez l’écran pour l’arrêter. Le soir, touchez l’écran une fois pour armer le réveil. Volume : boutons de l’iPhone.';
+    alarmHintEl.textContent = hint;
+  }
+
+  alarmEnabledEl.addEventListener('change', () => {
+    settings.alarmEnabled = alarmEnabledEl.checked;
+    saveSettings();
+    if (settings.alarmEnabled) unlockAudio();
+    syncAlarmForm(); updateNotice();
+  });
+  alarmTimeEl.addEventListener('change', () => {
+    if (/^\d{2}:\d{2}$/.test(alarmTimeEl.value)) { settings.alarmTime = alarmTimeEl.value; saveSettings(); }
+    lastFiredKey = '';
+    syncAlarmForm();
+  });
+  alarmFileEl.addEventListener('change', async () => {
+    const f = alarmFileEl.files && alarmFileEl.files[0];
+    if (!f) return;
+    try {
+      const buf = await f.arrayBuffer();
+      const type = f.type || guessType(f.name);
+      setAlarmSound(buf, type, f.name);
+      await idbPut('alarm', { data: buf, type, name: f.name });
+      syncAlarmForm();
+    } catch (e) {
+      syncAlarmForm();
+      alarmHintEl.textContent = 'Impossible d’enregistrer ce fichier. Essayez un mp3 ou m4a plus court.';
+    }
+    alarmFileEl.value = '';
+  });
+  alarmTestEl.addEventListener('click', () => {
+    if (ringing) { stopRing(); return; }
+    if (testing) { stopTest(); return; }
+    if (!alarmUrl) return;
+    testing = true;
+    alarmAudio.loop = false;
+    alarmAudio.src = alarmUrl;
+    const p = alarmAudio.play();
+    if (p && p.then) {
+      p.then(() => { alarmUnlocked = true; updateNotice(); }).catch(() => { testing = false; syncAlarmForm(); });
+    }
+    syncAlarmForm();
+  });
+
   // ---------- Démarrage ----------
   applyStyle();
+  loadAlarmSound();
   buildColors();
   syncForm();
   render();

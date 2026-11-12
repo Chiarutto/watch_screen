@@ -27,6 +27,9 @@
   <video id="nosleep" src="media/veille.mp4" muted playsinline loop preload="auto"
          webkit-playsinline disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
 
+  <!-- Son du réveil (fichier local) -->
+  <audio id="alarm" preload="auto" playsinline aria-hidden="true"></audio>
+
   <section id="settings" hidden aria-label="Réglages">
     <div class="panel">
       <h1>Réglages</h1>
@@ -61,6 +64,32 @@
           <input id="offTime" type="time" value="07:00" required>
         </label>
         <p id="scheduleHint" class="hint"></p>
+      </div>
+
+      <div class="group">
+        <h2>Réveil</h2>
+        <label class="row" for="alarmEnabled">
+          <span>Réveil</span>
+          <span class="switch">
+            <input id="alarmEnabled" type="checkbox" role="switch">
+            <span class="slider" aria-hidden="true"></span>
+          </span>
+        </label>
+        <label class="row" for="alarmTime" id="alarmTimeRow">
+          <span>Heure du réveil</span>
+          <input id="alarmTime" type="time" value="06:30" required>
+        </label>
+        <div class="row">
+          <span>Son</span>
+          <span id="alarmName" class="filename">Aucun</span>
+        </div>
+        <div class="buttons">
+          <label class="btn" for="alarmFile">Choisir un son…
+            <input id="alarmFile" type="file" accept="audio/*,.mp3,.m4a,.aac,.wav,.caf">
+          </label>
+          <button id="alarmTest" type="button" class="btn">Écouter</button>
+        </div>
+        <p id="alarmHint" class="hint"></p>
       </div>
 
       <p class="hint">Touchez l’écran noir pour voir l’heure 10 secondes. Appui long (2 s) pour ouvrir ces réglages.</p>
