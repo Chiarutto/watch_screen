@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "DSEG7 Classic";
+  src: url("fonts/DSEG7Classic-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
   --digit: #ff2b1c;
   --bright: 0.25;
@@ -137,7 +145,8 @@ h2 {
   .fonts { grid-template-columns: repeat(3, 1fr); }
 }
 .fonts .swatch { padding: 14px 4px 10px; gap: 8px; font-size: 13px; }
-.fonts .swatch b { font-size: 34px; color: var(--ui-text); }
+.fonts .swatch b { font-size: 34px; }
+.fonts .swatch span { line-height: 1.2; text-align: center; }
 .swatch {
   appearance: none;
   -webkit-appearance: none;

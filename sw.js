@@ -1,6 +1,6 @@
 // Service worker : met tout en cache pour un fonctionnement 100 % hors ligne.
 // Changez VERSION à chaque mise à jour des fichiers pour forcer le rafraîchissement.
-const VERSION = 'veilleuse-v4';
+const VERSION = 'veilleuse-v5';
 const FILES = [
   './',
   'index.html',
@@ -9,6 +9,7 @@ const FILES = [
   'manifest.json',
   'media/veille.mp4',
   'media/silence.m4a',
+  'fonts/DSEG7Classic-Regular.woff2',
   'icons/apple-touch-icon.png',
   'icons/icon-192.png',
   'icons/icon-512.png',

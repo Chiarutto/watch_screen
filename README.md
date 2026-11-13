@@ -7,8 +7,8 @@ Funziona completamente offline. L'interfaccia è in francese.
 
 - **Tocco singolo** sullo schermo nero (fuori dalla fascia oraria): l'ora compare per 10 secondi.
 - **Pressione prolungata (2 s)** in qualsiasi momento: apre i *Réglages* (impostazioni).
-- **Réglages**: colore delle cifre (8 colori), carattere (*Police*: Arrondie, Moderne, Futura,
-  Classique, Avenir, Machine — tutti già presenti sull'iPhone, funzionano offline), luminosità, ora di accensione (*Allumage*,
+- **Réglages**: colore delle cifre (8 colori), carattere (*Police*: Arrondie, Digitale
+  a 7 segmenti, Futura, Didot, Étroite, Machine à écrire — tutti locali, funzionano offline), luminosità, ora di accensione (*Allumage*,
   default 4:30), ora di spegnimento (*Extinction*, default 7:00) con interruttore per
   disattivarla. Se lo spegnimento è disattivato, l'ora resta visibile dall'accensione fino a
   mezzanotte. Le fasce che passano la mezzanotte (es. 22:00–7:00) sono gestite.
@@ -123,5 +123,6 @@ apri l'app due volte con internet attivo: la seconda volta parte la nuova versio
 | `manifest.json` | dati per l'installazione come app |
 | `icons/` | icone della schermata Home |
 | `media/silence.m4a` | silenzio usato per "armare" l'audio della sveglia |
+| `fonts/` | carattere Digitale (DSEG7, licenza SIL OFL 1.1) |
 | `media/veille.mp4` | video nero muto di riserva per tenere lo schermo acceso |
 | `.nojekyll` | dice a GitHub Pages di servire i file così come sono |

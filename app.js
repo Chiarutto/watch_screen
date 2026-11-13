@@ -15,12 +15,13 @@
 
   // Polices installées sur iPhone (aucun téléchargement : tout reste hors ligne)
   const FONTS = [
-    { id: 'arrondi', name: 'Arrondie', family: 'ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif', weight: 400 },
-    { id: 'moderne', name: 'Moderne',  family: '-apple-system, system-ui, "Helvetica Neue", Arial, sans-serif', weight: 400 },
-    { id: 'futura',  name: 'Futura',   family: 'Futura, "Futura PT", "Century Gothic", "Trebuchet MS", sans-serif', weight: 500 },
-    { id: 'serif',   name: 'Classique', family: 'ui-serif, "New York", Georgia, "Times New Roman", serif', weight: 400 },
-    { id: 'avenir',  name: 'Avenir',   family: '"Avenir Next", Avenir, "Segoe UI", sans-serif', weight: 500 },
-    { id: 'mono',    name: 'Machine',  family: 'ui-monospace, "SF Mono", Menlo, Courier, monospace', weight: 400 },
+    // DSEG7 est fourni avec l'app (dossier fonts/, licence OFL) ; les autres sont des polices d'iOS.
+    { id: 'arrondi',  name: 'Arrondie',  family: 'ui-rounded, "SF Pro Rounded", -apple-system, system-ui, sans-serif', weight: 400 },
+    { id: 'digitale', name: 'Digitale',  family: '"DSEG7 Classic", ui-monospace, monospace', weight: 400 },
+    { id: 'futura',   name: 'Futura',    family: 'Futura, "Futura PT", "Century Gothic", "Trebuchet MS", sans-serif', weight: 500 },
+    { id: 'didot',    name: 'Didot',     family: 'Didot, "Bodoni 72", "Bodoni MT", Georgia, serif', weight: 700 },
+    { id: 'etroite',  name: 'Étroite',   family: '"Avenir Next Condensed", "Arial Narrow", "Roboto Condensed", sans-serif-condensed, sans-serif', weight: 600 },
+    { id: 'machine',  name: 'Machine à écrire', family: '"American Typewriter", "Courier New", Courier, monospace', weight: 400 },
   ];
 
   const DEFAULTS = {
@@ -110,6 +111,10 @@
     const f = FONTS.find(x => x.id === settings.font) || FONTS[0];
     root.style.setProperty('--clock-font', f.family);
     root.style.setProperty('--clock-weight', String(f.weight));
+    // Mesure à nouveau quand la police est réellement chargée
+    if (document.fonts && document.fonts.load) {
+      document.fonts.load(`${f.weight} 100px ${f.family}`, '0123456789:').then(() => fit()).catch(() => {});
+    }
     root.style.setProperty('--bright', String(settings.bright / 100));
   }
 
@@ -396,8 +401,10 @@
       b.setAttribute('aria-checked', String(sel));
       b.querySelector('b').style.opacity = String(Math.max(0.35, settings.bright / 100));
     });
+    const col = (COLORS.find(x => x.id === settings.color) || COLORS[0]).hex;
     [...fontsEl.children].forEach(b => {
       b.setAttribute('aria-checked', String(b.dataset.id === settings.font));
+      b.querySelector('b').style.color = col;
     });
     brightEl.value = settings.bright;
     brightVal.textContent = settings.bright + ' %';
