@@ -1,9 +1,9 @@
 :root {
   --digit: #ff2b1c;
   --bright: 0.25;
-  --ui-text: #8e8e8e;
-  --ui-dim: #5e5e5e;
-  --ui-line: #252525;
+  --ui-text: #b4b4b4;
+  --ui-dim: #828282;
+  --ui-line: #333333;
   --ui-accent: #8a3a2a;
   --fade: 3s;
 }
@@ -59,7 +59,7 @@ html, body {
   line-height: 1;
   white-space: nowrap;
   font-size: 120px; /* ajusté en JS */
-  transition: transform 1.2s ease-in-out;
+  transition: transform 1s linear;
 }
 
 #notice {
@@ -100,7 +100,6 @@ html, body {
 #settings[hidden] { display: none; }
 
 .panel {
-  opacity: 0.95;
   max-width: 520px;
   margin: 0 auto;
 }
@@ -133,14 +132,16 @@ h2 {
 @media (orientation: landscape) {
   .colors { grid-template-columns: repeat(8, 1fr); }
 }
-.fonts { grid-template-columns: repeat(5, 1fr); margin-top: 8px; }
+.fonts { grid-template-columns: repeat(3, 1fr); gap: 10px; }
 @media (orientation: landscape) {
-  .fonts { grid-template-columns: repeat(5, 1fr); }
+  .fonts { grid-template-columns: repeat(3, 1fr); }
 }
+.fonts .swatch { padding: 14px 4px 10px; gap: 8px; font-size: 13px; }
+.fonts .swatch b { font-size: 34px; color: var(--ui-text); }
 .swatch {
   appearance: none;
   -webkit-appearance: none;
-  background: #070707;
+  background: #101010;
   border: 1px solid var(--ui-line);
   border-radius: 10px;
   padding: 8px 2px 6px;
@@ -161,8 +162,8 @@ h2 {
   line-height: 1;
 }
 .swatch[aria-checked="true"] {
-  border-color: #3a3a3a;
-  background: #111;
+  border-color: #6a6a6a;
+  background: #1c1c1c;
   color: var(--ui-text);
 }
 

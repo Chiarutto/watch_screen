@@ -19,6 +19,7 @@
     { id: 'moderne', name: 'Moderne',  family: '-apple-system, system-ui, "Helvetica Neue", Arial, sans-serif', weight: 400 },
     { id: 'futura',  name: 'Futura',   family: 'Futura, "Futura PT", "Century Gothic", "Trebuchet MS", sans-serif', weight: 500 },
     { id: 'serif',   name: 'Classique', family: 'ui-serif, "New York", Georgia, "Times New Roman", serif', weight: 400 },
+    { id: 'avenir',  name: 'Avenir',   family: '"Avenir Next", Avenir, "Segoe UI", sans-serif', weight: 500 },
     { id: 'mono',    name: 'Machine',  family: 'ui-monospace, "SF Mono", Menlo, Courier, monospace', weight: 400 },
   ];
 
@@ -122,7 +123,6 @@
     if (key !== lastMinuteKey) {
       lastMinuteKey = key;
       timeEl.textContent = key;
-      shift();
     }
     const visible = inWindow(d) || Date.now() < peekUntil || ringFailed;
     clock.classList.toggle('on', visible);
@@ -153,18 +153,54 @@
       (availH * (landscape ? 0.7 : 0.45)) / h * 100
     );
     timeEl.style.fontSize = Math.max(24, Math.floor(size)) + 'px';
-    shift();
+    driftStep(0);
   }
 
-  // Anti-marquage : petit déplacement aléatoire à chaque minute
-  function shift() {
-    const vw = scene.clientWidth, vh = scene.clientHeight;
-    const r = timeEl.getBoundingClientRect();
-    const maxX = Math.max(0, Math.min(14, (vw - r.width) / 2 - 4));
-    const maxY = Math.max(0, Math.min(14, (vh - r.height) / 2 - 4));
-    const dx = Math.round((Math.random() * 2 - 1) * maxX);
-    const dy = Math.round((Math.random() * 2 - 1) * maxY);
-    timeEl.style.transform = `translate(${dx}px, ${dy}px)`;
+  // Dérive lente (anti-marquage) : 1 px par seconde dans une direction fixe ;
+  // au bord de l'écran l'heure rebondit et repart dans une autre direction.
+  const DRIFT_SPEED = 1; // px par seconde
+  const drift = { x: 0, y: 0, vx: 0, vy: 0 };
+  (function initDrift() {
+    const a = Math.random() * Math.PI * 2;
+    drift.vx = Math.cos(a) * DRIFT_SPEED;
+    drift.vy = Math.sin(a) * DRIFT_SPEED;
+  })();
+
+  function driftLimits() {
+    const cs = getComputedStyle(scene);
+    const availW = scene.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    const availH = scene.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
+    return {
+      mx: Math.max(0, (availW - timeEl.offsetWidth) / 2),
+      my: Math.max(0, (availH - timeEl.offsetHeight) / 2),
+    };
+  }
+
+  // Tourne légèrement la direction après un rebond pour ne pas repasser toujours au même endroit
+  function nudgeDirection() {
+    const a = Math.atan2(drift.vy, drift.vx) + (Math.random() - 0.5) * 0.6;
+    drift.vx = Math.cos(a) * DRIFT_SPEED;
+    drift.vy = Math.sin(a) * DRIFT_SPEED;
+  }
+
+  function driftStep(dt) {
+    const { mx, my } = driftLimits();
+    let x = drift.x + drift.vx * dt;
+    let y = drift.y + drift.vy * dt;
+    let hitX = 0, hitY = 0;
+    if (x > mx) { x = mx; hitX = 1; } else if (x < -mx) { x = -mx; hitX = -1; }
+    if (y > my) { y = my; hitY = 1; } else if (y < -my) { y = -my; hitY = -1; }
+    if (dt && (hitX || hitY)) {
+      if (hitX && mx > 0) drift.vx = -drift.vx;
+      if (hitY && my > 0) drift.vy = -drift.vy;
+      nudgeDirection();
+      // Toujours repartir vers l'intérieur
+      if (hitX > 0) drift.vx = -Math.abs(drift.vx); else if (hitX < 0) drift.vx = Math.abs(drift.vx);
+      if (hitY > 0) drift.vy = -Math.abs(drift.vy); else if (hitY < 0) drift.vy = Math.abs(drift.vy);
+    }
+    drift.x = x;
+    drift.y = y;
+    timeEl.style.transform = `translate(${x.toFixed(2)}px, ${y.toFixed(2)}px)`;
   }
 
   function peek() {
@@ -360,12 +396,8 @@
       b.setAttribute('aria-checked', String(sel));
       b.querySelector('b').style.opacity = String(Math.max(0.35, settings.bright / 100));
     });
-    const c = COLORS.find(x => x.id === settings.color) || COLORS[0];
     [...fontsEl.children].forEach(b => {
       b.setAttribute('aria-checked', String(b.dataset.id === settings.font));
-      const prev = b.querySelector('b');
-      prev.style.color = c.hex;
-      prev.style.opacity = String(Math.max(0.35, settings.bright / 100));
     });
     brightEl.value = settings.bright;
     brightVal.textContent = settings.bright + ' %';
@@ -600,6 +632,7 @@
   window.addEventListener('resize', fit);
   window.addEventListener('orientationchange', () => setTimeout(fit, 300));
   setInterval(render, 1000);
+  setInterval(() => driftStep(1), 1000);
   keepAwake();
   updateNotice();
 
